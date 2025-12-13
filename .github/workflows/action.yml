@@ -22,7 +22,7 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: 📦 Install dependencies
-        run: yarn install
+        run: npm install && npm install -g eas-cli
 
       - name: 🚀 Build app
         # This step starts the build on Expo's cloud and waits for completion.

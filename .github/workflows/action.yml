@@ -33,7 +33,7 @@ jobs:
 
       - name: ⬇️ Download Artifacts
         # This action automatically downloads the finished build artifact from the EAS servers
-        uses: expo/expo-github-action/download-artifacts@v8
+        uses: actions/download-artifact@v4
         with:
           # Assumes you built for android/internal profile
           workflow-run-id: ${{ github.run_id }}

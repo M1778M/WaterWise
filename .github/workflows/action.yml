@@ -2,34 +2,26 @@ on:
   push:
     branches:
       - master
+
 jobs:
-  build:
+  ci:
+    # Call the reusable ci.yml workflow in this repo
+    uses: ./.github/workflows/ci.yml
+    with:
+      node-version: '18'
+      package-manager: 'npm'
+      # keep the same install you had (install EAS CLI too)
+      install-command: 'npm install && npm install -g eas-cli'
+      build-command: 'eas build --platform android --non-interactive --profile internal'
+    secrets:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+  release:
+    needs: ci
     runs-on: ubuntu-latest
     steps:
       - name: 🏗 Setup repo
         uses: actions/checkout@v3
-
-      - name: 🏗 Setup Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18.x
-          cache: yarn
-
-      - name: 🏗 Setup EAS
-        uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
-
-      - name: 📦 Install dependencies
-        run: npm install && npm install -g eas-cli
-
-      - name: 🚀 Build app
-        # This step starts the build on Expo's cloud and waits for completion.
-        # TODO: Should probably update this command later
-        run: eas build --platform android --non-interactive --profile internal
-
-      # --- New Steps for GitHub Releases ---
 
       - name: ⬇️ Download Artifacts
         # This action automatically downloads the finished build artifact from the EAS servers
@@ -39,9 +31,8 @@ jobs:
           workflow-run-id: ${{ github.run_id }}
 
       - name: 🏷️ Get app version from app.json
-        # Use a simple inline script to extract version info from your app.json/app.config.js
         id: get_version
-        run: echo "APP_VERSION=$(node -p 'require("./app.json").expo.version')" >> $GITHUB_OUTPUT
+        run: echo "APP_VERSION=$(node -p 'require(\"./app.json\").expo.version')" >> $GITHUB_OUTPUT
 
       - name: 📦 Create GitHub Release and Upload APK
         uses: softprops/action-gh-release@v1

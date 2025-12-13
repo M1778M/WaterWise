@@ -21,6 +21,11 @@ on:
         required: false
         type: string
         default: ''
+      use-expo:
+        description: 'Whether to setup Expo/EAS (pass true from caller to enable)'
+        required: false
+        type: boolean
+        default: false
     secrets:
       # Optional; callers can pass tokens if needed
       NPM_TOKEN:
@@ -46,8 +51,8 @@ jobs:
           node-version: ${{ inputs.node-version }}
           cache: ${{ inputs.package-manager }}
 
-      - name: Setup EAS (login to Expo) if EXPO_TOKEN provided
-        if: ${{ secrets.EXPO_TOKEN != '' }}
+      - name: Setup EAS (login to Expo) if enabled by caller
+        if: ${{ inputs.use-expo }}
         uses: expo/expo-github-action@v8
         with:
           eas-version: latest

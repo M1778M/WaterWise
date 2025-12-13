@@ -1,0 +1,58 @@
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🏗 Setup repo
+        uses: actions/checkout@v3
+
+      - name: 🏗 Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+          cache: yarn
+
+      - name: 🏗 Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: 📦 Install dependencies
+        run: yarn install
+
+      - name: 🚀 Build app
+        # This step starts the build on Expo's cloud and waits for completion.
+        run: eas build --platform android --non-interactive --profile internal
+
+      # --- New Steps for GitHub Releases ---
+
+      - name: ⬇️ Download Artifacts
+        # This action automatically downloads the finished build artifact from the EAS servers
+        uses: expo/expo-github-action/download-artifacts@v8
+        with:
+          # Assumes you built for android/internal profile
+          workflow-run-id: ${{ github.run_id }}
+
+      - name: 🏷️ Get app version from app.json
+        # Use a simple inline script to extract version info from your app.json/app.config.js
+        id: get_version
+        run: echo "APP_VERSION=$(node -p 'require("./app.json").expo.version')" >> $GITHUB_OUTPUT
+
+      - name: 📦 Create GitHub Release and Upload APK
+        uses: softprops/action-gh-release@v1
+        with:
+          # Create a new tag/release named vX.X.X based on your app.json version
+          tag_name: v${{ steps.get_version.outputs.APP_VERSION }}-${{ github.run_number }}
+          name: Release v${{ steps.get_version.outputs.APP_VERSION }}-${{ github.run_number }}
+          body: |
+            Automated build: ${{ github.run_number }}.
+            Profile: Internal Android
+            Made by: M1778
+          draft: false
+          prerelease: false
+          files: |
+            build/internal/*.apk

@@ -1,0 +1,85 @@
+# Reusable CI workflow — only runs when called (workflow_call)
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        description: 'Node.js version to use'
+        required: false
+        type: string
+        default: '18'
+      package-manager:
+        description: 'npm | yarn | pnpm'
+        required: false
+        type: string
+        default: 'npm'
+      install-command:
+        description: 'Optional custom install command (overrides package-manager)'
+        required: false
+        type: string
+      build-command:
+        description: 'Build command to run (e.g. "npm run build" or "yarn build")'
+        required: false
+        type: string
+        default: ''
+    secrets:
+      # Optional; callers can pass tokens if needed
+      NPM_TOKEN:
+        required: false
+      EXPO_TOKEN:
+        required: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      NODE_VERSION: ${{ inputs.node-version }}
+      PACKAGE_MANAGER: ${{ inputs.package-manager }}
+      INSTALL_COMMAND: ${{ inputs.install-command }}
+      BUILD_COMMAND: ${{ inputs.build-command }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: ${{ inputs.package-manager }}
+
+      - name: Setup EAS (login to Expo) if EXPO_TOKEN provided
+        if: ${{ secrets.EXPO_TOKEN != '' }}
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: |
+          set -e
+          echo "PACKAGE_MANAGER=$PACKAGE_MANAGER"
+          if [ -n "$INSTALL_COMMAND" ]; then
+            echo "Running custom install command: $INSTALL_COMMAND"
+            eval "$INSTALL_COMMAND"
+          else
+            if [ "$PACKAGE_MANAGER" = "yarn" ]; then
+              echo "Using yarn to install"
+              yarn install --frozen-lockfile
+            elif [ "$PACKAGE_MANAGER" = "pnpm" ]; then
+              echo "Using pnpm to install"
+              corepack enable
+              pnpm install --frozen-lockfile
+            else
+              echo "Using npm ci"
+              npm ci
+            fi
+          fi
+
+      - name: Run build
+        run: |
+          set -e
+          if [ -n "$BUILD_COMMAND" ]; then
+            echo "Running build command: $BUILD_COMMAND"
+            eval "$BUILD_COMMAND"
+          else
+            echo "No build command provided — skipping build step"
+          fi

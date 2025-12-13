@@ -26,6 +26,7 @@ jobs:
 
       - name: 🚀 Build app
         # This step starts the build on Expo's cloud and waits for completion.
+        # TODO: Should probably update this command later
         run: eas build --platform android --non-interactive --profile internal
 
       # --- New Steps for GitHub Releases ---

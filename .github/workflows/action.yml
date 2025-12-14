@@ -32,8 +32,9 @@ jobs:
       - name: 🛠 Build Android APK with EAS
         id: build_apk
         run: |
-          BUILD_ID=$(eas build --platform android --non-interactive --profile internal --wait 2>&1 | grep -i "build id" | awk '{print $NF}')
-          eas build:download --id $BUILD_ID
+          eas build --platform android --non-interactive --profile internal --wait > build_output.txt
+          ARTIFACT_URL=$(grep -oP 'https://.*\.apk' build_output.txt | head -1)
+          curl -o build.apk "$ARTIFACT_URL"
 
       - name: 📤 Upload APK as artifact
         uses: actions/upload-artifact@v4
@@ -97,7 +98,11 @@ jobs:
         with:
           node-version: 18.x
           cache: npm
-
+      - name: 🔐 Setup Expo
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
       - name: 📦 Install dependencies
         run: |
           npm install

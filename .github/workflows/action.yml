@@ -15,7 +15,7 @@ jobs:
       - name: ⬢ Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18.x
+          node-version: 24.x
           cache: npm
 
       - name: 📦 Install dependencies
@@ -24,7 +24,7 @@ jobs:
           npm install -g eas-cli
 
       - name: 🔐 Setup Expo
-        uses: expo/expo-github-action@v8.2.1
+        uses: expo/expo-github-action@v8
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
@@ -32,10 +32,12 @@ jobs:
       - name: 🛠 Build Android APK with EAS
         id: build_apk
         run: |
-          eas build --platform android --non-interactive --profile internal --output=build.apk
+          eas build --platform android --non-interactive --profile internal --wait > build_output.txt
+          ARTIFACT_URL=$(grep -oP 'https://.*\.apk' build_output.txt | head -1)
+          curl -o build.apk "$ARTIFACT_URL"
 
       - name: 📤 Upload APK as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: waterwise-apk
           path: build.apk
@@ -50,9 +52,35 @@ jobs:
           tag_name: v${{ steps.get_version.outputs.APP_VERSION }}-${{ github.run_number }}
           name: Release v${{ steps.get_version.outputs.APP_VERSION }}-${{ github.run_number }}
           body: |
-            Automated build: ${{ github.run_number }}.
-            Profile: Internal Android
-            Made by: M1778
+            ## WaterWise Mobile Application - Release v${{ steps.get_version.outputs.APP_VERSION }}
+            
+            Automated build #${{ github.run_number }} for Android platform.
+            
+            ### Build Information
+            - **Build Profile**: Internal Android
+            - **Version**: ${{ steps.get_version.outputs.APP_VERSION }}
+            - **Build Number**: ${{ github.run_number }}
+            - **Commit**: ${{ github.sha }}
+            
+            ### Release Notes
+            This release contains the latest stable build of the WaterWise application.
+            WaterWise is a comprehensive water usage tracking and conservation application
+            built with React Native and Expo.
+            
+            ### Features
+            - Water usage tracking with detailed categorization
+            - Bill management with cost analysis
+            - Real-time analytics and usage patterns
+            - AI-powered conservation recommendations
+            - Multi-language support (English/Persian)
+            - Dark/light theme support
+            - Data export capabilities
+            
+            ### Installation
+            Download the APK file attached to this release and install it on your Android device.
+            
+            ### Feedback
+            For issues or feature requests, please submit them through the project repository.
           draft: false
           prerelease: false
           files: build.apk
@@ -74,14 +102,14 @@ jobs:
       - name: 📦 Install dependencies
         run: |
           npm install
-          npm install -g expo-cli
+          npm install -g eas-cli
 
       - name: 🛠 Build Android APK locally
         run: |
           expo build:android -t apk --non-interactive
 
       - name: 📤 Upload APK as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: waterwise-apk-local
           path: dist/*.apk
@@ -96,9 +124,38 @@ jobs:
           tag_name: v${{ steps.get_version.outputs.APP_VERSION }}-${{ github.run_number }}-local
           name: Release v${{ steps.get_version.outputs.APP_VERSION }}-${{ github.run_number }} Local Build
           body: |
-            Automated local build: ${{ github.run_number }}.
-            Profile: Internal Android
-            Made by: M1778
+            ## WaterWise Mobile Application - Local Build v${{ steps.get_version.outputs.APP_VERSION }}
+            
+            Fallback local build #${{ github.run_number }} for Android platform.
+            
+            ### Build Information
+            - **Build Profile**: Internal Android (Local)
+            - **Version**: ${{ steps.get_version.outputs.APP_VERSION }}
+            - **Build Number**: ${{ github.run_number }}-local
+            - **Commit**: ${{ github.sha }}
+            
+            ### Important Notice
+            This is a fallback build generated due to issues with the primary EAS build process.
+            
+            ### Release Notes
+            This release contains the latest stable build of the WaterWise application.
+            WaterWise is a comprehensive water usage tracking and conservation application
+            built with React Native and Expo.
+            
+            ### Features
+            - Water usage tracking with detailed categorization
+            - Bill management with cost analysis
+            - Real-time analytics and usage patterns
+            - AI-powered conservation recommendations
+            - Multi-language support (English/Persian)
+            - Dark/light theme support
+            - Data export capabilities
+            
+            ### Installation
+            Download the APK file attached to this release and install it on your Android device.
+            
+            ### Feedback
+            For issues or feature requests, please submit them through the project repository.
           draft: false
           prerelease: false
           files: dist/*.apk

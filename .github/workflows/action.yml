@@ -24,7 +24,7 @@ jobs:
           npm install -g eas-cli
 
       - name: 🔐 Setup Expo
-        uses: expo/expo-github-action@v8
+        uses: expo/expo-github-action@v8.2.1
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}

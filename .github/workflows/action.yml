@@ -32,7 +32,7 @@ jobs:
       - name: 🛠 Build Android APK with EAS
         id: build_apk
         run: |
-          eas build --platform android --non-interactive --profile internal --wait > build_output.txt
+          EAS_NO_VCS=1 eas build --platform android --non-interactive --profile internal --wait > build_output.txt
           ARTIFACT_URL=$(grep -oP 'https://.*\.apk' build_output.txt | head -1)
           curl -o build.apk "$ARTIFACT_URL"
 

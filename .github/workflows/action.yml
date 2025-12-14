@@ -81,7 +81,7 @@ jobs:
           expo build:android -t apk --non-interactive
 
       - name: 📤 Upload APK as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: waterwise-apk-local
           path: dist/*.apk
